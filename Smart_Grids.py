@@ -48,8 +48,8 @@ def create_output_writer(net_area1, output_dir, profiles):
     area_x_buses, area_x_lines , net_area1 = get_network_area()
     ow = OutputWriter(net_area1, time_steps = time_steps, output_path=output_dir, output_file_type=".xlsx", log_variables=list())
 
-    ow.log_variable('res_bus_max', 'vm_pu', index=area_x_buses, eval_function=np.max, eval_name="bus_max_vm_pu")
-    ow.log_variable('res_bus_min', 'vm_pu', index=area_x_buses, eval_function=np.min, eval_name="bus_min_vm_pu")
+    ow.log_variable('res_bus', 'vm_pu', index=area_x_buses, eval_function=np.max, eval_name="bus_max_vm_pu")
+    ow.log_variable('res_bus', 'vm_pu', index=area_x_buses, eval_function=np.min, eval_name="bus_min_vm_pu")
     ow.log_variable('res_line', 'p_mw', index=area_x_lines, eval_function=np.max, eval_name="line_max_loading")
     return ow
 def load_network():
@@ -100,7 +100,7 @@ def plot_timeseries(output_dir):
     area_x_buses, area_x_lines , net_area1 = get_network_area()
     profiles = pd.read_csv("/Users/admin/Downloads/timeseries_exercise_5.csv", delimiter=";", index_col=0)
     create_output_writer(net_area1,"/Users/admin/Downloads/Excercises", profiles )
-    vm_pu_file = os.path.join(output_dir, "res_bus_max", "vm_pu.xlsx")
+    vm_pu_file = os.path.join(output_dir, "res_bus", "vm_pu.xlsx")
     vm_pu = pd.read_excel(vm_pu_file, index_col=0)
     vm_pu.plot(label="vm_pu_max")
     plt.xlabel("time step")
@@ -110,12 +110,12 @@ def plot_timeseries(output_dir):
     plt.show()
 
     # line loading results
-    ll_file = os.path.join(output_dir, "res_line_min", "loading_percent.xlsx")
+    ll_file = os.path.join(output_dir, "res_line", "loading_percent.xlsx")
     line_loading = pd.read_excel(ll_file, index_col=0)
     line_loading.plot(label="vm_pu_min")
     plt.xlabel("time step")
-    plt.ylabel("voltage mag. [p.u.]")
-    plt.title("Minimum Voltage Magnitude")
+    plt.ylabel("Loading Percent %")
+    plt.title("Loading Percent %")
     plt.grid()
     plt.show()
 
@@ -142,4 +142,4 @@ if not os.path.exists(output_dir):
 #create_data_source()
 
 
-plot_timeseries("/Users/admin/Downloads/timeseries_exercise_5.csv")
+plot_timeseries("/Users/admin/Downloads/Excercises")
