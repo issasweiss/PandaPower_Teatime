@@ -15,20 +15,6 @@ from pandapower.timeseries import DFData
 import os.path
 from openpyxl.workbook import Workbook
 
-
-def time_series(output_dir):
-    profiles, ds = create_data_source()
-    time_steps = profiles.index
-    area_x_buses, area_x_lines, net_area1 = get_network_area()
-    net = load_network()
-    create_controllers(net, ds)
-
-    create_output_writer(net, output_dir, profiles)
-
-    return run_timeseries(net_area1, time_steps)
-
-
-
 def create_data_source():
     profiles = pd.read_csv("/Users/admin/Downloads/timeseries_exercise_5.csv", delimiter=";", index_col=0)
 
@@ -37,25 +23,22 @@ def create_data_source():
     return profiles, ds
 
 
-def create_controllers(net, ds):
+def timeseries(output_dir):
+    net = load_network()
+    profiles, ds = create_data_source()
     area_x_buses, area_x_lines, net_area1 = get_network_area()
-
     ConstControl(net, "load", variable='p_mw', element_index=net_area1.load.index,
                  data_source=ds, profile_name=["loads"])
     ConstControl(net, "sgen", variable='p_mw', element_index=net_area1.sgen.index,
                  data_source=ds, profile_name=["sgens"])
-
-
-def create_output_writer(net, output_dir, profiles):
     time_steps = profiles.index
-    ow = OutputWriter(net, time_steps, output_path=output_dir, output_file_type=".xlsx",
-                      log_variables=list())
+    ow = OutputWriter(net, time_steps, output_path=output_dir, output_file_type=".xlsx", log_variables=list())
 
-    ow.log_variable('res_bus', 'vm_pu')# index=area_x_buses.index, eval_function=max, eval_name="bus_max_vm_pu")
-    ow.log_variable('res_bus', 'vm_pu') #index=area_x_buses.index, eval_function=min, eval_name="bus_min_vm_pu")
-    ow.log_variable('res_line', 'p_mw') #index=area_x_lines.index, eval_function=max, eval_name="line_max_loading")
+    ow.log_variable('res_bus', 'vm_pu', index=net_area1.bus.index, eval_function=max, eval_name="bus_max_vm_pu")
+    ow.log_variable('res_bus', 'vm_pu', index=net_area1.bus.index, eval_function=min, eval_name="bus_min_vm_pu")
+    ow.log_variable('res_line', 'p_mw', index=net_area1.line.index, eval_function=max, eval_name="line_max_loading")
 
-    return ow
+    return run_timeseries(net, time_steps = profiles.index)
 
 
 def load_network():
@@ -64,14 +47,14 @@ def load_network():
 
 def get_network_area():
     net = load_network()
-    mg = top.create_nxgraph(net, nogobuses={80}, include_lines=True, respect_switches=True)
+    mg = top.create_nxgraph(net, nogobuses={80})
     area_x_buses = list(top.connected_component(mg, bus=86))
     area_x_lines = list()
-    for line in net.line.index:
+    net_area1 = pp.select_subnet(net, area_x_buses)
+
+    for line in net.bus.index:
         if net.line.from_bus.loc[line] in area_x_buses:
             area_x_lines.append(line)
-
-    net_area1 = pp.select_subnet(net, area_x_buses)
 
     return area_x_buses, area_x_lines, net_area1
 
@@ -106,9 +89,6 @@ def violations(net):
 
 def plot_timeseries(output_dir):
     # voltage results
-    area_x_buses, area_x_lines, net_area1 = get_network_area()
-    profiles = pd.read_csv("/Users/admin/Downloads/timeseries_exercise_5.csv", delimiter=";", index_col=0)
-    create_output_writer(net_area1, "/Users/admin/Downloads/Excercises", profiles)
     vm_pu_file = os.path.join(output_dir, "res_bus", "vm_pu.xlsx")
     vm_pu = pd.read_excel(vm_pu_file, index_col=0)
     vm_pu.plot(label="vm_pu_max")
@@ -140,15 +120,18 @@ def plot_timeseries(output_dir):
     return
 
 
-output_dir = "/Users/admin/Downloads/Results"
+output_dir = os.path.join(tempfile.gettempdir(), "/Users/admin/Downloads/Results")
 print("Results can be found in your local temp folder: {}".format(output_dir))
-if not os.path.exists(output_dir):
-    os.mkdir(output_dir)
-#time_series(output_dir)
-#plot_timeseries("/Users/admin/Downloads/Excercises")
+timeseries(output_dir)
+#plot_timeseries("/Users/admin/Downloads/Results")
 # get_network_area()
 # plotting_area()
 # create_data_source()
-area_x_buses, area_x_lines, net_area1 = get_network_area()
-profiles = pd.read_csv("/Users/admin/Downloads/timeseries_exercise_5.csv", delimiter=";", index_col=0)
-create_output_writer(net_area1, output_dir, profiles)
+#area_x_buses, area_x_lines, net_area1 = get_network_area()
+#profiles = pd.read_csv("/Users/admin/Downloads/timeseries_exercise_5.csv", delimiter=";", index_col=0)
+#create_output_writer(load_network(), output_dir, profiles)
+#create_controllers(load_network(), DFData(profiles))
+
+#get_network_area()
+#print(net_area1.sgen)
+#print(area_x_buses)
