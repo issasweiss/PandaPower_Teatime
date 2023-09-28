@@ -1,2 +1,2 @@
 # PandaPower_Teatime
-Grid Planning &amp; Energy System Modelling 
+Personal projects on Grid Planning &amp; Energy System Modelling 
